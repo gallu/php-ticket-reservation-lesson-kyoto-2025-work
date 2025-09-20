@@ -13,17 +13,27 @@ use App\DbConnection;
  */
 class TicketPurchase
 {
-    // tokenから情報を取得
-    public static function getByToken(string $token): array|false
+    // 「1カラム」から情報を１件取得
+    protected static function getBy(string $col_name, string $value): array|false
     {
+        $white_list = [
+            'email' => true,
+            'token' => true,
+        ];
+        // カラム名チェック
+        if (false === isset($white_list[$col_name])) {
+            echo "カラム名おかしくない？ なにしてるの？";
+            exit;
+        }
+
         try {
             $dbh = DbConnection::get();
 
             // プリペアドステートメント
-            $sql = 'SELECT * FROM ticket_purchases WHERE token = :token;';
+            $sql = "SELECT * FROM ticket_purchases WHERE {$col_name} = :value;";
             $pre = $dbh->prepare($sql);
             //
-            $pre->bindValue(':token', $token, \PDO::PARAM_STR);
+            $pre->bindValue(':value', $value, \PDO::PARAM_STR);
             //
             $pre->execute();
             $datum = $pre->fetch();
@@ -34,6 +44,18 @@ class TicketPurchase
         }
 
         return $datum;
+    }
+
+    // emailから情報を取得
+    public static function getByEmail(string $email): array|false
+    {
+        return static::getBy('email', $email);
+    }
+
+    // tokenから情報を取得
+    public static function getByToken(string $token): array|false
+    {
+        return static::getBy('token', $token);
     }
 
     // 全件取得
